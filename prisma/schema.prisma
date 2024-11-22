@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String?
+  name      String?
+  picture   String?
+  role      String   @default("user")
+  enabled   Boolean  @default(true)
+  address   String?
+  orders    Order[]
+  carts     Cart[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Menu {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String
+  price       Float
+  sold        Int           @default(0)
+  quantity    Int
+  orderItems  MenuOnOrder[]
+  cartItems   MenuOnCart[]
+  image       Image[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+}
+
+model Order {
+  id          Int           @id @default(autoincrement())
+  menu        MenuOnOrder[]
+  cartTotal   Float
+  orderStatus String        @default("Not Process")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  orderBy     User?          @relation(fields: [orderById], references: [id])
+  orderById   Int?
+  stripePaymentId String
+  amount      Int
+  status      String
+  currency    String
+}
+
+model MenuOnOrder {
+  id      Int    @id @default(autoincrement())
+  menu    Menu   @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  menuId  Int
+  order   Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId Int
+  count   Int
+  price   Float
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  menu      Menu[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  image     Image[]
+}
+
+model Cart {
+  id        Int          @id @default(autoincrement())
+  menu      MenuOnCart[]
+  cartTotal Float
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  orderBy   User?        @relation(fields: [orderById], references: [id])
+  orderById Int?
+}
+
+model MenuOnCart {
+  id     Int   @id @default(autoincrement())
+  cart   Cart  @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId Int
+  menu   Menu?  @relation(fields: [menuId], references: [id])
+  menuId Int?
+  count  Int
+  price  Float
+}
+
+model Image {
+  id         Int       @id @default(autoincrement())
+  asset_id   String
+  public_id  String
+  url        String
+  secure_url String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  menu       Menu?     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  menuId     Int?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId Int?
+}
